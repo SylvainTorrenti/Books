@@ -1,28 +1,46 @@
 ﻿using BLL.Interfaces;
 using Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace BLL.Implementation
+namespace BLL.Implementation;
+
+internal class LibrairiService : ILibrairiService
 {
-    internal class LibrairiService : ILibrairiService
+    public static List<Book> books = new List<Book>() {
+            new Book("TitleTest1","AuthorTest1","DespritionTest1"),
+            new Book("TitleTest2","AuthorTest2","DespritionTest2"),
+            new Book("TitleTest3","AuthorTest3","DespritionTest3"),
+            new Book("TitleTest4","AuthorTest4","DespritionTest4"),
+            new Book("TitleTest5","AuthorTest5","DespritionTest5"),
+        };
+
+
+    public Book CreateBook(Book book)
     {
-        public Book CreateBook(Book book)
-        {
-            return book;
-        }
 
-        public List<Book> GetAllBooks()
-        {
-            return new List<Book>();
-        }
+        //id
 
-        public Book GetBookById(int id)
-        {
-            return new Book("", "", "");
-        }
+        //ajoute à la liste 
+
+        return book;
+    }
+
+    public List<Book> GetAllBooks()
+    {
+        return books;
+    }
+
+    public Book GetBookById(Guid? id)
+    {
+        return new Book("", "", "");
+    }
+
+    public bool DeleteBook(Guid id)
+    {
+        return true;
+    }
+
+    public Book UpdateBook(Guid id)
+    {
+        return new Book(id,"", "", "");
     }
 }

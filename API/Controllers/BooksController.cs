@@ -1,5 +1,7 @@
 ﻿using BLL;
 using BLL.Interfaces;
+using Domain.DTO.Requests;
+using Domain.DTO.Responses;
 using Domain.Entities;
 using Domain.Exceptions;
 using Microsoft.AspNetCore.Mvc;
@@ -26,19 +28,23 @@ namespace API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
 
-        public IActionResult GetBookById(int id)
+        public IActionResult GetBookById(Guid? id)
         {
-            if (id<0)
+            if (id is null)
             {
                 BadRequest("L'id doit être supérieur à 0");
             }
             try
             {
-                return Ok(_librairiService.GetBookById(id));
+                //BLL
+                Book bookById = _librairiService.GetBookById(id);
+                //Retour BLL => DTO response
+                var reponse = new GetBookByIdResponse();
+                return Ok(reponse);
             }
-            catch (NotFoundException ex) 
-            { 
-                return NotFound($"Le livre {id} est introuvable");
+            catch (NotFoundException ex)
+            {
+                return NotFound($"Le livre {id.Value} est introuvable");
             }
         }
         #endregion
@@ -48,20 +54,28 @@ namespace API.Controllers
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public IActionResult CreateBook([FromBody] Book book)
+        public IActionResult CreateBook([FromBody] CreateBookDTORequest createBookDTORequest)
         {
-            book.Id = Book.Compteur;
-
-            Book.books.Add(book);
-
-            if (Book.books.Exists(b => book.Id == b.Id))
+            // DTO => domaine metier
+            Book newBook = new Book()
             {
-                return CreatedAtAction(nameof(GetBookById), new { id = book.Id }, book);
-            }
-            else
+                Title = createBookDTORequest.Title,
+                Author = createBookDTORequest.Author,
+                Description = createBookDTORequest.Description,
+            };
+
+            //BLL
+            var book = _librairiService.CreateBook(newBook);
+
+            //Retour BLL => DTO response
+            var response = new CreateBookDTOResponse()
             {
-                return BadRequest();
-            }
+                Id = book.Id,
+                Title = book.Title,
+                Author = book.Author,
+                Description = book.Description,
+            };
+            return Ok(response);
         }
         #endregion
 
@@ -70,18 +84,29 @@ namespace API.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public IActionResult ModifyBook([FromRoute] int id, [FromBody] Book book)
+        public IActionResult ModifyBook([FromRoute] Guid id, [FromBody] UpdateBookDTORequest updateBookDTORequest)
         {
-            if (id != book.Id)
+            if (id != updateBookDTORequest.Id)
             {
                 return BadRequest();
             }
             else
             {
-                Book bookModified = book;
+                //BLL
+                Book bookModified = _librairiService.UpdateBook(id);
+
                 if (bookModified != null)
                 {
-                    return Ok(bookModified);
+                    //Retour BLL => DTO response
+                    var reponse = new UpdateBookDTOResponse()
+                    {
+                        Id = updateBookDTORequest.Id,
+                        Title = updateBookDTORequest.Title,
+                        Author = updateBookDTORequest.Author,
+                        Description = updateBookDTORequest.Description,
+                    };
+
+                    return Ok(reponse);
                 }
                 else
                 {
@@ -95,19 +120,22 @@ namespace API.Controllers
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public IActionResult DeleteBook([FromRoute] int id)
+        public IActionResult DeleteBook([FromRoute] Guid? id)
         {
-            var book = Book.books.Find(b => b.Id == id);
-            if (id == book.Id)
+            if (id is null)
             {
-                Book.books.Remove(book);
+                BadRequest("L'id doit être supérieur à 0");
+            }
+
+            if (_librairiService.DeleteBook(id.Value))
+            {
                 return NoContent();
             }
             else
             {
                 return NotFound();
             }
-        } 
+        }
         #endregion
     }
 }
